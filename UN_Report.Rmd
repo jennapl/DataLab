@@ -1,0 +1,364 @@
+---
+title: "UN Climate Report"
+author: "Matthew Corp. Data Science Team"
+date: '2022-06-10'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE)
+```
+
+```{r, echo = FALSE}
+# Datasets
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(leaflet)
+library(knitr)
+library(pander)
+library(ggthemes)
+
+# Greenhouse gas emissions by country-year, 1750 - 2020
+ghg <- read_csv('https://raw.githubusercontent.com/ericmkeen/capstone/master/co2.csv')
+
+# Greenhouse gas emissions by country-year-sector, 1990 - 2018
+sectors <- read_csv('https://raw.githubusercontent.com/ericmkeen/capstone/master/co2_sectors.csv')
+```
+
+# Introduction
+
+Carbon Emissions have proved detrimental to the weather, wildlife, weather, and many aspects of this world. The following is a detailed report of Green House Gas (GHG) emissions, specially Carbon (Co2), over time across the globe.
+
+ 
+The following report consist of data from two databases.
+
+`GHG`: Detailed report of Country, Continent, and region Co2 emissions from 1750 to 2020
+
+`sectors`: Detailed report of Co2 Emissions by Economic Sectors in Countries, Cotinents, and Regions around the globe.
+ 
+  
+  
+Note: Carbon Emissions are measure in Parts Per Million (PPM)
+
+# Present Day GHG Emissions
+
+The following graphs will depict GHG emissions in Present Day on a geographic level. Note the years for each graph, as "Present Day" is defined on a different scale for one of them.
+
+## Co2 Greatest Emmitters
+Analysis of Top 10 Co2 Emitting Countries
+
+```{r}
+country <- sectors %>% 
+  group_by(entity) %>% 
+  filter(entity != "World" &
+           entity != "High-income countries" &
+           entity != "Upper-middle-income countries" &
+           entity != "Lower-middle-income countries" &
+           entity != "North America (excl. USA)" &
+           entity != "Europe (excl. EU-28)" &
+           entity != "Europe (excl. EU-27)" &
+           entity != "Asia (excl. China & India)" &
+           entity != "European Union (27)" &
+           entity != "European Union (28)" &
+           entity != "Europe" &
+           entity != "Asia" &
+           entity != "North America" &
+           entity != "Africa" &
+           entity != "Oceania" &
+           entity != "Low-income countries") %>% 
+  summarise(CO2 = sum(co2)) %>% 
+  arrange(desc(CO2))
+
+country_top10 <- sectors %>% 
+  group_by(entity) %>% 
+  filter(entity != "World" &
+           entity != "High-income countries" &
+           entity != "Upper-middle-income countries" &
+           entity != "Lower-middle-income countries" &
+           entity != "North America (excl. USA)" &
+           entity != "Europe (excl. EU-28)" &
+           entity != "Europe (excl. EU-27)" &
+           entity != "Asia (excl. China & India)" &
+           entity != "European Union (27)" &
+           entity != "European Union (28)" &
+           entity != "Europe" &
+           entity != "Asia" &
+           entity != "North America" &
+           entity != "Africa" &
+           entity != "Oceania" &
+           entity != "Low-income countries") %>% 
+  summarise(CO2 = sum(co2)) %>% 
+  arrange(desc(CO2)) %>% 
+  head(10)
+
+country_bottom10 <- sectors %>% 
+  group_by(entity) %>% 
+  filter(entity != "World" &
+           entity != "High-income countries" &
+           entity != "Upper-middle-income countries" &
+           entity != "Lower-middle-income countries" &
+           entity != "North America (excl. USA)" &
+           entity != "Europe (excl. EU-28)" &
+           entity != "Europe (excl. EU-27)" &
+           entity != "Asia (excl. China & India)" &
+           entity != "European Union (27)" &
+           entity != "European Union (28)" &
+           entity != "Europe" &
+           entity != "Asia" &
+           entity != "North America" &
+           entity != "Africa" &
+           entity != "Oceania" &
+           entity != "Low-income countries",
+         co2 != 'NA') %>% 
+  summarise(CO2 = sum(co2)) %>% 
+  arrange(desc(CO2)) %>% 
+  tail(10)
+```
+
+```{r}
+ggplot(country_top10) +
+  geom_histogram(aes(x = CO2, y = entity, fill = entity), stat = 'identity') +
+  labs(subtitle = '1990 - 2018',
+       caption = 'Ellie Davis',
+       x = 'CO2 Levels',
+       y= 'Country') +
+  theme_classic() +
+  theme(legend.position = 'none')
+```
+
+## Co2 Lowest Emmitters
+Analysis of Bottom 10 Co2 Emitting Countries
+```{r}
+ggplot(country_bottom10) +
+  geom_histogram(aes(x = CO2, y= entity, fill = entity), stat = 'identity') +
+  labs(title = 'Least Co2 Emitters by Country in Recent Years',
+       subtitle = '1990 - 2018',
+       caption = 'Ellie Davis',
+       x = 'CO2 Levels',
+       y= 'Country') +
+  theme_classic()+
+   theme(legend.position = 'none') 
+```
+<!-- ## Recent Region Co2 Emissions -->
+<!-- ```{r} -->
+<!-- regions <- read_csv("C:\Users\jplus\Downloads\countriesOfWorld.csv") -->
+
+<!-- regions <- regions %>%  -->
+<!--   select(Country, Region) -->
+
+<!-- regCO2 <- ghg %>%  -->
+<!--   filter(Entity %in% regions$Country) %>%  -->
+<!--   rename(Country = Entity) -->
+
+<!-- regCO2 <- merge(regCO2, regions) %>%  -->
+<!--   group_by(Region, Year) %>%  -->
+<!--   summarize(co2 = sum(`Annual CO2 emissions (zero filled)`)) %>%  -->
+<!--   mutate(co2 = co2/1000000) %>%  -->
+<!--   filter(Year >= 1990 & Year <= 2018) -->
+
+<!-- ggplot(data = regCO2, aes(x = Year, y = co2, color = Region)) + -->
+<!--   geom_line() + -->
+<!--   labs(title = "CO2 Emissions from 1990 to 2018", subtitle = "by Region", y = "CO2 Emissions (in Millions)") + -->
+<!--   theme_classic() -->
+<!-- ``` -->
+
+## Recent Sector Co2 Emissions
+Analysis of Co2 emissions by Sector from 1990 - 2018 
+```{r}
+test <- sectors %>% filter(entity != "World" &
+           entity != "High-income countries" &
+           entity != "Upper-middle-income countries" &
+           entity != "Lower-middle-income countries" &
+           entity != "North America (excl. USA)" &
+           entity != "Europe (excl. EU-28)" &
+           entity != "Europe (excl. EU-27)" &
+           entity != "Asia (excl. China & India)" &
+           entity != "European Union (27)" &
+           entity != "European Union (28)" &
+           entity != "Europe" &
+           entity != "Asia" &
+           entity != "North America" &
+           entity != "Africa" &
+           entity != "Oceania" &
+           entity != "Low-income countries") %>% 
+  group_by(sector) %>% 
+  summarize(co2_e = sum(co2, na.rm = TRUE))
+
+ggplot( data = test) + 
+  geom_col(aes( x = sector, y = co2_e/1000000, fill = sector)) +
+  labs( x = "Sector", y = "CO2 Emissions (Million PPM)", color = "Sector") + theme_clean() + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  theme(legend.position = "None")
+
+```
+
+
+
+
+
+# Long Term Carbon Emissions
+Ranging from 1750 - 2020, the following graphs will detail the long term Co2 emissions across multiple geographic locations.
+
+## Global Long Term Carbon Emissions
+
+```{r}
+global <- ghg %>% 
+  group_by(Year) %>%
+  summarise(CO2 = sum(`Annual CO2 emissions (zero filled)`))
+```
+
+```{r}
+ggplot(global, aes(x = Year, y = CO2/1000000)) +
+  geom_line(color = 'dark green') +
+  scale_x_continuous(breaks = seq(1750, 2020, by = 20)) +
+  labs(title = 'CO2 Emissions Globally',
+       subtitle = '1750 - 2020',
+       caption = 'Ellie Davis',
+       y = 'CO2 Emissions (Millions of PPM)')
+```
+
+
+## Co2 Emissions by Continent
+```{r}
+regions <- ghg %>% filter(Entity == "World" |
+                            Entity == "High-income countries" |
+                            Entity == "Upper-middle-income countries" |
+                            Entity == "Lower-middle-income countries" |
+                            Entity == "North America (excl. USA)" |
+                            Entity == "Europe (excl. EU-28)" |
+                            Entity == "Europe (excl. EU-27)" |
+                            Entity == "Asia (excl. China & India)" |
+                            Entity == "European Union (27)" |
+                            Entity == "European Union (28)" |
+                            Entity == "Europe" |
+                            Entity == "Asia" |
+                            Entity == "North America" |
+                            Entity == "Africa" |
+                            Entity == "Oceania" |
+                            Entity == "Low-income countries")
+ggplot(data = regions) + geom_line(aes(x = Year, y = regions$`Annual CO2 emissions (zero filled)`, color = Entity))
+
+```
+
+## Sector by Sector
+Measuring Co2 Emissions by Economic Sector from 1990 - 2018
+```{r}
+#Creating DF for Sector by Sector Longterm CO2 Emissions
+test <- sectors %>% filter(entity != "World" &
+           entity != "High-income countries" &
+           entity != "Upper-middle-income countries" &
+           entity != "Lower-middle-income countries" &
+           entity != "North America (excl. USA)" &
+           entity != "Europe (excl. EU-28)" &
+           entity != "Europe (excl. EU-27)" &
+           entity != "Asia (excl. China & India)" &
+           entity != "European Union (27)" &
+           entity != "European Union (28)" &
+           entity != "Europe" &
+           entity != "Asia" &
+           entity != "North America" &
+           entity != "Africa" &
+           entity != "Oceania" &
+           entity != "Low-income countries") %>% 
+  group_by(year, sector) %>% 
+  summarize(co2_e = sum(co2, na.rm = TRUE))
+
+ggplot( data = test) + 
+  geom_line(aes( x = year, y = co2_e/1000000, color = sector)) + 
+  geom_point(aes( x = year, y = co2_e/1000000, color = sector)) + 
+  labs( x = "Year", y = "CO2 Emissions (Million PPM)", color = "Sector") + theme_clean()
+```
+
+## Income based Co2 Emissions
+```{r}
+region_by_income <- ghg %>% filter(Entity == "High-income countries" |
+                                     Entity == "Upper-middle-income countries" |
+                                     Entity == "Lower-middle-income countries" |
+                                     Entity == "Low-income countries")
+ggplot(data = region_by_income) +
+  geom_line(aes(x = Year, y = region_by_income$`Annual CO2 emissions (zero filled)`, color = Entity)) +
+  labs(title ="CO2 emissions by level of income from 1750 to 2020.", y = "Annual CO2 emissions")
+```
+
+
+
+
+# Trends in Top 5 Most Emitting Countries
+
+## Long Term Co2 Emissions
+```{r}
+top5C <- ghg %>% 
+  filter(Entity != "World" &
+           Entity != "High-income countries" &
+           Entity != "Upper-middle-income countries" &
+           Entity != "Lower-middle-income countries" &
+           Entity != "North America (excl. USA)" &
+           Entity != "Europe (excl. EU-28)" &
+           Entity != "Europe (excl. EU-27)" &
+           Entity != "Asia (excl. China & India)" &
+           Entity != "European Union (27)" &
+           Entity != "European Union (28)" &
+           Entity != "Europe" &
+           Entity != "Asia" &
+           Entity != "North America" &
+           Entity != "Africa" &
+           Entity != "Oceania" &
+           Entity != "Low-income countries") %>% 
+  group_by(Entity) %>% 
+  summarize(totalCO2 = sum(`Annual CO2 emissions (zero filled)`)) %>% 
+  arrange(desc(totalCO2)) %>% 
+  head(5)
+
+top5 <- ghg %>% 
+  filter(Entity %in% top5C$Entity) %>% 
+  mutate(`Annual CO2 emissions (zero filled)` = `Annual CO2 emissions (zero filled)`/1000000)
+
+ggplot(data = top5, aes(x = Year, y = `Annual CO2 emissions (zero filled)`, color = Entity)) +
+  geom_line() +
+  labs(title = "Emissions of Top 5 Highest Emission Countries",
+       subtitle = "1750 to 2020",
+       y = "CO2 Emissions (in Millions)") +
+  theme_clean() +
+  scale_x_continuous(breaks = seq(1750, 2020, by = 25))
+```
+
+## Co2 by Sector
+```{r}
+top5_by_sector <- sectors %>% 
+  filter(entity != "World" &
+           entity != "High-income countries" &
+           entity != "Upper-middle-income countries" &
+           entity != "Lower-middle-income countries" &
+           entity != "North America (excl. USA)" &
+           entity != "Europe (excl. EU-28)" &
+           entity != "Europe (excl. EU-27)" &
+           entity != "Asia (excl. China & India)" &
+           entity != "European Union (27)" &
+           entity != "European Union (28)" &
+           entity != "Europe" &
+           entity != "Asia" &
+           entity != "North America" &
+           entity != "Africa" &
+           entity != "Oceania" &
+           entity != "Low-income countries",
+         entity %in% c('United States', 'China', 'Russia', 'Germany', 'United Kingdom')) %>% 
+  group_by(entity, sector) %>%
+  summarize(totalCO2 = sum(co2))
+
+ggplot(data = top5_by_sector, 
+       aes(x = sector, y = totalCO2, fill = sector)) +
+  geom_histogram(stat = 'identity') +
+  labs(title = "Emissions of Top 5 Highest Emission Countries",
+       subtitle = "1750 to 2020, by Sector",
+       y = "CO2 Emissions (in Millions)",
+       x = " ") +
+  facet_wrap(~entity) +
+  theme(axis.text.x = element_blank())
+```
+
+Data and code can be sent by request for further analysis. 
+
+Collected and Analyzed by Matthew Corp.
